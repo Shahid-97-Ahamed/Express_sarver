@@ -2,6 +2,7 @@ import express, { Request,Response } from "express";
 import {Pool} from "pg";
 import dotenv from "dotenv";
 import path from "path";
+import e from "express";
 
 dotenv.config({path:path.join(process.cwd(),".env")});
 
@@ -17,6 +18,8 @@ app.use(express.json())
 const pool = new Pool({
     connectionString:`${process.env.CONNECTION_STR}`,
 })
+
+// for create users
 
 const initDB = async () => {
   await pool.query(`
@@ -49,21 +52,87 @@ initDB();
 
 
 
-
+// for get
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello Next Developer!');
 });
 
-// for postnpm i --save-dev @types/pg
+// the post for users API
 
-app.post("/",(req:Request,res:Response)=>{
-    console.log(req.body);
+app.post("/users", async (req: Request, res: Response) => {
+  const { name, email } = req.body;
 
+  try {
+    const result = await pool.query(
+      `INSERT INTO users(name,email) VALUES($1,$2) RETURNING *`,
+      [name, email]
+    );
+
+    console.log(result.rows[0]); // Inserted row দেখার জন্য
     res.status(201).json({
-        sucess:true,
-        message:"API is Working"
-    })
+      success: true,
+      message: "Data inserted",
+      data: result.rows[0]
+    });
+
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+// the get for users API
+
+app.get("/users",async(req:Request,res:Response)=>{
+    const {name,email} = req.body;
+
+    try {
+        const result =await pool.query(`
+            SELECT * FROM users`);
+            res.status(200).json({
+            success:true,
+            message:"WOW user API is reading....",
+            data:result.rows
+        })
+            
+    } catch (err:any) {
+        res.status(500).json({
+            success:false,
+            message:err.message,
+            details:err
+        })
+    }
+})
+
+// the get for single users
+app.get("/users/:id",async(req:Request,res:Response)=>{
+  
+    try {
+        const result =await pool.query(`SELECT * FROM users WHERE id=$1`,[req.params.id]);
+           if(result.rows.length === 0){
+             res.status(404).json({
+            success:false,
+            message:"Ahhh..User Not found."
+        })
+    }
+    else{
+            res.status(200).json({
+            success:true,
+            message:"Wow you can get...",
+            deta:result.rows[0],
+        })
+           }
+        
+    } catch (err:any) {
+          res.status(500).json({
+            success:false,
+            message:err.message,
+            details:err
+        })
+    }
 })
 
 app.listen(port, () => {
