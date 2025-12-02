@@ -84,7 +84,7 @@ app.post("/users", async (req: Request, res: Response) => {
   }
 });
 
-// the get for users API
+// the get for users CRUD API
 
 app.get("/users",async(req:Request,res:Response)=>{
     const {name,email} = req.body;
@@ -107,9 +107,11 @@ app.get("/users",async(req:Request,res:Response)=>{
     }
 })
 
-// the get for single users
+// the get for single users CRUD
 app.get("/users/:id",async(req:Request,res:Response)=>{
-  
+   
+    // console.log(req.params.id)
+
     try {
         const result =await pool.query(`SELECT * FROM users WHERE id=$1`,[req.params.id]);
            if(result.rows.length === 0){
@@ -134,6 +136,67 @@ app.get("/users/:id",async(req:Request,res:Response)=>{
         })
     }
 })
+
+// the put for users updeting....
+
+app.put("/users/:id",async(req:Request,res:Response)=>{
+    // console.log(req.params.id)
+    const {name,email} =req.body;
+    try {
+        const result =await pool.query(`UPDATE users SET name=$1,email=$2 WHERE id=$3 RETURNING *`,[name,email,req.params.id]);
+           if(result.rows.length === 0){
+             res.status(404).json({
+            success:false,
+            message:"SORRY..User Not found."
+        })
+    }
+    else{
+            res.status(200).json({
+            success:true,
+            message:"Updating Successfully...!",
+            deta:result.rows[0],
+        })
+           }
+        
+    } catch (err:any) {
+          res.status(500).json({
+            success:false,
+            message:err.message,
+            details:err
+        })
+    }
+})
+
+// the delete for users Api
+app.delete("/users/:id",async(req:Request,res:Response)=>{
+   
+    // console.log(req.params.id)
+
+    try {
+        const result =await pool.query(`DELETE FROM users WHERE id=$1`,[req.params.id,]);
+           if(result.rowCount === 0){
+             res.status(404).json({
+            success:false,
+            message:"Ahhh..User Not found."
+        })
+    }
+    else{
+            res.status(200).json({
+            success:true,
+            message:"DElete Successfully....",
+            deta:result.rows,
+        })
+           }
+        
+    } catch (err:any) {
+          res.status(500).json({
+            success:false,
+            message:err.message,
+            details:err
+        })
+    }
+})
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
