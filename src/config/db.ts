@@ -10,6 +10,7 @@ const initDB = async () => {
       id SERIAL PRIMARY KEY,
       name VARCHAR(120),
       email VARCHAR(160) UNIQUE NOT NULL,
+      password TEXT,
       age INT,
       phone VARCHAR(20),
       address TEXT,
